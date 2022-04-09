@@ -24,6 +24,27 @@ async function run() {
         await client.connect();
         const database = client.db("makemycomplaint");
         const storesCollection = database.collection("stores");
+        const usersCollection = database.collection("users");
+
+        //Add users to database those who signed up with Email Password
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.json(result);
+        })
+
+        //Add users to database those who signed up with External Provider
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+
+        })
 
 
 
