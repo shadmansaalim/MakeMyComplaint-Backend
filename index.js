@@ -53,6 +53,14 @@ async function run() {
             res.json(stores);
         })
 
+        //Get single store by unique id
+        app.get('/store/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const store = await storesCollection.findOne(query);
+            res.json(store);
+        })
+
         //Register new store
         app.post('/register-store', async (req, res) => {
             const store = req.body;
