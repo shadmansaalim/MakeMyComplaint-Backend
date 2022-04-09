@@ -46,6 +46,20 @@ async function run() {
 
         })
 
+        //GET STORES FROM DB
+        app.get('/stores', async (req, res) => {
+            const cursor = storesCollection.find({});
+            const stores = await cursor.toArray();
+            res.json(stores);
+        })
+
+        //Register new store
+        app.post('/register-store', async (req, res) => {
+            const store = req.body;
+            const result = await storesCollection.insertOne(store);
+            res.json(result);
+        })
+
 
 
     }
