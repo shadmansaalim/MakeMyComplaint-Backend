@@ -79,10 +79,14 @@ async function run() {
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             let isAdmin = false;
+            let isManager = false;
             if (user?.role === 'admin') {
                 isAdmin = true;
             }
-            res.json({ admin: isAdmin });
+            if (user?.role === 'manager') {
+                isManager = true;
+            }
+            res.json({ admin: isAdmin, manager: isManager });
         })
 
         //GET STORES FROM DB
@@ -125,6 +129,15 @@ async function run() {
             const complaint = req.body;
             const result = await complaintsCollection.insertOne(complaint);
             res.json(result);
+        })
+
+        //Get complaints
+        app.get('/complaints/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { managerEmail: email };
+            const cursor = await complaintsCollection.find(query);
+            const complaints = cursor.toArray();
+            res.json(complaints);
         })
 
 
