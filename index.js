@@ -103,6 +103,19 @@ async function run() {
         //Register new store
         app.post('/register-store', async (req, res) => {
             const store = req.body;
+            const manager = store.manager;
+            const managerEmail = store.email;
+            const user = {
+                name: manager,
+                email: managerEmail,
+                role: 'manager'
+            };
+            const filter = { email: managerEmail };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const update = await usersCollection.updateOne(filter, updateDoc, options);
             const result = await storesCollection.insertOne(store);
             res.json(result);
         })
