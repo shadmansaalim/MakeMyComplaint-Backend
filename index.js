@@ -51,6 +51,7 @@ async function run() {
         const database = client.db("makemycomplaint");
         const storesCollection = database.collection("stores");
         const usersCollection = database.collection("users");
+        const complaintsCollection = database.collection("complaints");
 
         //Add users to database those who signed up with Email Password
         app.post('/users', async (req, res) => {
@@ -103,6 +104,13 @@ async function run() {
         app.post('/register-store', async (req, res) => {
             const store = req.body;
             const result = await storesCollection.insertOne(store);
+            res.json(result);
+        })
+
+        // Make a complaint
+        app.post('/complaint', async (req, res) => {
+            const complaint = req.body;
+            const result = await complaintsCollection.insertOne(complaint);
             res.json(result);
         })
 
