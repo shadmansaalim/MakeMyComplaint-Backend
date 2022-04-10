@@ -3,10 +3,20 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config()
+const admin = require("firebase-admin");
 const ObjectId = require('mongodb').ObjectId;
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+
+//Firebase Admin Initialization
+const serviceAccount = './makemycomplaint-eb757-firebase-adminsdk-jakjx-8ca4702a96.json';
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
 
 //Middleware use for server
 app.use(cors());
@@ -16,6 +26,22 @@ app.use(express.json());
 //MongoDB
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cxsup.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+//Function to verify user using JWT token
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith('Bearer ')) {
+        const token = req.headers.authorization.split(' ')[1];
+
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(token);
+            req.decodedEmail = decodedUser.email;
+        }
+        catch {
+
+        }
+    }
+    next();
+}
 
 
 async function run() {
@@ -46,6 +72,18 @@ async function run() {
 
         })
 
+        //Checking if user is admin or not
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        })
+
         //GET STORES FROM DB
         app.get('/stores', async (req, res) => {
             const cursor = storesCollection.find({});
@@ -68,6 +106,27 @@ async function run() {
             res.json(result);
         })
 
+
+        //Dashboard Data For Admin
+        app.get('/dashboard-data', verifyToken, async (req, res) => {
+            const userEmail = req.query.email;
+            if (req.decodedEmail === userEmail && userEmail !== undefined) {
+                let result = {};
+                let cars = database.collection('stores');
+                await cars.count().then((storesCount) => {
+                    result.stores = storesCount;
+                });
+                let users = database.collection('users');
+                await users.count().then((usersCount) => {
+                    result.users = usersCount;
+                });
+                res.json(result);
+            }
+            else {
+                //Sending status of unauthorization
+                res.status(401).json({ message: 'User Not Authorized' })
+            }
+        })
 
 
     }
